@@ -15,6 +15,7 @@ import io.nats.client.api.ConsumerConfiguration;
 import io.nats.client.api.DeliverPolicy;
 import io.nats.client.api.ReplayPolicy;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -46,7 +47,8 @@ public class ListenDataNatsJetStreamController {
     private String queue;
 
     @PostConstruct
-    public void start() throws Exception {
+    @SneakyThrows
+    public void start() {
         Dispatcher dispatcher = connection.createDispatcher(this::onMessage);
 
         ConsumerConfiguration consumerConfiguration = ConsumerConfiguration.builder()
@@ -100,15 +102,15 @@ public class ListenDataNatsJetStreamController {
         .subscribe();
     }
 
-    private void route(NatsJetStreamResponseInfo<Object> ctx) {
-        String beanName = CommonUtils.toBeanName(ctx.getMessageType());
+    private void route(NatsJetStreamResponseInfo<Object> responseInfo) {
+        String beanName = CommonUtils.toBeanName(responseInfo.getMessageType());
 
         if (!handlerRegistry.contains(beanName)) {
-            log.warn("[HANDLER] not found messageType={} bean={}", ctx.getMessageType(), beanName);
+            log.warn("[HANDLER] not found messageType={} bean={}", responseInfo.getMessageType(), beanName);
             return;
         }
 
         HandlerBase<NatsJetStreamResponseInfo<Object>> handler = handlerRegistry.get(beanName);
-        handler.handle(ctx);
+        handler.handle(responseInfo);
     }
 }
