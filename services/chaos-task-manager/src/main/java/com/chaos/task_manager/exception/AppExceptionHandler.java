@@ -2,7 +2,7 @@ package com.chaos.task_manager.exception;
 
 import com.chaos.task_manager.dto.common.ErrorResponse;
 import com.chaos.task_manager.utils.CommonUtils;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,7 +11,7 @@ import org.springframework.web.reactive.result.method.annotation.ResponseEntityE
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-@Log4j2
+@Slf4j
 @RestControllerAdvice
 public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 

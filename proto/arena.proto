@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package chaos.v1;
 
-option java_package = "com.chaos.proto";
+option java_package = "com.arena.proto";
 option java_multiple_files = true;
 
 message TaskCommand {
@@ -24,4 +24,8 @@ message TaskAck {
 service AgentService {
   rpc Apply(TaskCommand) returns (TaskAck);
   rpc Rollback(TaskCommand) returns (TaskAck);
+}
+
+service TaskManagerService {
+  rpc Submit(TaskCommand) returns (TaskAck);
 }
