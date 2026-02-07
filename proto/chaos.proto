@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package chaos.v1;
+
+option java_package = "com.chaos.proto";
+option java_multiple_files = true;
+
+message TaskCommand {
+  string arena_id = 1;
+  string task_id  = 2;
+  string type     = 3; // KILL_PODS, SCALE, ROLLBACK...
+  string target   = 4; // service/deployment name
+  int32  value    = 5; // percent/replicas...
+  string reason   = 6;
+}
+
+message TaskAck {
+  string arena_id = 1;
+  string task_id  = 2;
+  bool accepted   = 3;
+  string message  = 4;
+}
+
+service AgentService {
+  rpc Apply(TaskCommand) returns (TaskAck);
+  rpc Rollback(TaskCommand) returns (TaskAck);
+}

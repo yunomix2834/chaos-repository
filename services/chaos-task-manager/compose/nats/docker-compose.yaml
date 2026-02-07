@@ -1,0 +1,16 @@
+services:
+  nats:
+    # nats://jetstream_app:jetstream_app123@localhost:4222
+    image: nats:2.10-alpine
+    container_name: nats-jetstream
+    command: ["-c", "/etc/nats/nats.conf"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf:ro
+      - nats-data:/data
+    restart: unless-stopped
+
+volumes:
+  nats-data:

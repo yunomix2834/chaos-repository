@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: chaos-task-manager
+
+server:
+  port: ${HTTP_PORT:8888}
+
+chaos:
+  grpc:
+    agentHost: ${AGENT_GRPC_HOST:localhost}
+    agentPort: ${AGENT_GRPC_PORT:50051}
+  nats:
+    url: ${NATS_URL:nats://localhost:4222}
+    stream: ${NATS_STREAM:ARENA_CMD}
+    subject: ${NATS_SUBJECT:arena.*.command.task.create}
+    durable: ${NATS_DURABLE:task-manager}
+    queue: ${NATS_QUEUE:task-manager-q}
