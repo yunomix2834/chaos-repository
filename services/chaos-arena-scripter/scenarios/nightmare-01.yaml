@@ -1,0 +1,10 @@
+steps:
+  - type: SCALE
+    target: deployment/cart
+    value: 6
+    reason: "scale up cart for spike"
+
+  - type: KILL_PODS
+    target: "app=cart"
+    value: 30
+    reason: "kill 30% cart pods"

@@ -4,6 +4,7 @@ package chaos.v1;
 
 option java_package = "com.arena.proto";
 option java_multiple_files = true;
+option java_outer_classname = "ArenaProto";
 
 message TaskCommand {
   string arena_id = 1;

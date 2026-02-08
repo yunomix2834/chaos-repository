@@ -1,0 +1,22 @@
+[project]
+name = "chaos-arena-scripter"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "grpcio>=1.60.0",
+  "grpcio-tools>=1.60.0",
+  "protobuf>=4.25.0",
+  "discord.py>=2.4.0",
+  "PyYAML>=6.0.1",
+  "pydantic>=2.6.0",
+  "python-dotenv>=1.0.1",
+]
+
+[project.scripts]
+chaos-scripter = "chaos_scripter.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
