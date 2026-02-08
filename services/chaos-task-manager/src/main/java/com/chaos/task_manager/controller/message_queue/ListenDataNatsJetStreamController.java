@@ -5,15 +5,14 @@ import com.chaos.task_manager.controller.message_queue.handler.HandlerRegistry;
 import com.chaos.task_manager.dto.common.NatsJetStreamRequestInfo;
 import com.chaos.task_manager.dto.common.NatsJetStreamResponseInfo;
 import com.chaos.task_manager.utils.CommonUtils;
-import io.nats.client.Connection;
-import io.nats.client.Dispatcher;
 import io.nats.client.JetStream;
+import io.nats.client.JetStreamSubscription;
 import io.nats.client.Message;
-import io.nats.client.PushSubscribeOptions;
+import io.nats.client.PullSubscribeOptions;
 import io.nats.client.api.AckPolicy;
 import io.nats.client.api.ConsumerConfiguration;
-import io.nats.client.api.DeliverPolicy;
-import io.nats.client.api.ReplayPolicy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -22,17 +21,20 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ListenDataNatsJetStreamController {
 
-    private final Connection connection;
     private final JetStream jetStream;
     private final HandlerRegistry handlerRegistry;
+
+    private volatile boolean running = true;
+    private JetStreamSubscription sub;
 
     @Value("${chaos.nats.stream}")
     private String stream;
@@ -43,74 +45,135 @@ public class ListenDataNatsJetStreamController {
     @Value("${chaos.nats.durable}")
     private String durable;
 
-    @Value("${chaos.nats.queue}")
-    private String queue;
-
     @PostConstruct
-    @SneakyThrows
-    public void start() {
-        Dispatcher dispatcher = connection.createDispatcher(this::onMessage);
+    public void start() throws Exception {
+        String durableEvt = durable + "-evt";
 
-        ConsumerConfiguration consumerConfiguration = ConsumerConfiguration.builder()
-                .durable(durable + "-events")
+        ConsumerConfiguration cc = ConsumerConfiguration.builder()
+                .durable(durableEvt)
                 .ackPolicy(AckPolicy.Explicit)
                 .ackWait(Duration.ofSeconds(30))
-                .deliverPolicy(DeliverPolicy.New)
-                .replayPolicy(ReplayPolicy.Instant)
+                .maxDeliver(10)
+                .maxAckPending(10_000)
                 .filterSubject(evtSubject)
                 .build();
 
-        PushSubscribeOptions pushSubscribeOptions = PushSubscribeOptions.builder()
+        PullSubscribeOptions pso = PullSubscribeOptions.builder()
                 .stream(stream)
-                .configuration(consumerConfiguration)
+                .durable(durableEvt)
+                .configuration(cc)
                 .build();
 
-        jetStream.subscribe(evtSubject, queue, pushSubscribeOptions);
+        sub = jetStream.subscribe(evtSubject, pso);
 
-        log.info("[NATS][SUB] stream={} subject={} durable={} queue={}",
-                stream, evtSubject, durable + "-events", queue);
+        log.info("[NATS][EVT][PULL-SUB] stream={} subject={} durable={}", stream, evtSubject, durableEvt);
+
+        Mono.fromRunnable(this::pullLoop)
+                .subscribeOn(Schedulers.boundedElastic())
+                .subscribe();
     }
 
-    private void onMessage(Message message) {
-        Mono.fromRunnable(() -> {
+    private void pullLoop() {
+        while (running) {
             try {
-                byte[] data = message.getData();
+                sub.pull(10);
 
-                NatsJetStreamRequestInfo requestInfo = CommonUtils.OBJECT_MAPPER.readValue(data, NatsJetStreamRequestInfo.class);
-                NatsJetStreamResponseInfo<Object> responseInfo = NatsJetStreamResponseInfo.builder()
-                        .raw(message)
-                        .subject(requestInfo.getSubject())
-                        .messageType(requestInfo.getMessageType())
-                        .requestId(requestInfo.getRequestId())
-                        .traceId(requestInfo.getTraceId())
-                        .tenantId(requestInfo.getTenantId())
-                        .lang(requestInfo.getLang())
-                        .headers(requestInfo.getHeaders())
-                        .bodyJson(requestInfo.getBody())
-                        .body(requestInfo.getBody())
-                        .build();
+                List<Message> messages = sub.fetch(10, Duration.ofSeconds(1));
 
-                route(responseInfo);
+                for (Message m : messages) {
+                    handleMessage(m);
+                }
 
-                message.ack();
             } catch (Exception e) {
-                log.error("[NATS][SUB] handle failed: {}", e.getMessage(), e);
-                message.nakWithDelay(Duration.ofSeconds(5));
+                log.error("[NATS][EVT][PULL] error: {}", e.getMessage(), e);
+                sleepSilently(500);
             }
-        })
-        .subscribeOn(Schedulers.boundedElastic())
-        .subscribe();
+        }
+    }
+
+    private void handleMessage(Message message) {
+        try {
+            NatsJetStreamResponseInfo<Object> ctx = parseToResponseInfo(message);
+            route(ctx);
+            message.ack();
+        } catch (Exception e) {
+            log.error("[NATS][EVT] handle failed: {}", e.getMessage(), e);
+            try {
+                message.nak();
+            } catch (Exception ignore) {}
+        }
+    }
+
+    @SneakyThrows
+    private NatsJetStreamResponseInfo<Object> parseToResponseInfo(Message message){
+        byte[] data = message.getData();
+
+        try {
+            NatsJetStreamRequestInfo req = CommonUtils.OBJECT_MAPPER.readValue(data, NatsJetStreamRequestInfo.class);
+
+            return NatsJetStreamResponseInfo.builder()
+                    .raw(message)
+                    .subject(req.getSubject())
+                    .messageType(req.getMessageType())
+                    .requestId(req.getRequestId())
+                    .traceId(req.getTraceId())
+                    .tenantId(req.getTenantId())
+                    .lang(req.getLang())
+                    .headers(req.getHeaders())
+                    .bodyJson(req.getBody())
+                    .body(req.getBody())
+                    .build();
+
+        } catch (Exception ignored) {
+            String body = new String(data, StandardCharsets.UTF_8);
+
+            String msgType = message.getHeaders() != null ? message.getHeaders().getFirst("X-Message-Type") : null;
+            String reqId  = message.getHeaders() != null ? message.getHeaders().getFirst("X-Request-Id") : null;
+            String trace  = message.getHeaders() != null ? message.getHeaders().getFirst("X-Trace-Id") : null;
+            String tenant = message.getHeaders() != null ? message.getHeaders().getFirst("X-Tenant-Id") : null;
+            String lang   = message.getHeaders() != null ? message.getHeaders().getFirst("X-Lang") : "en";
+
+            return NatsJetStreamResponseInfo.builder()
+                    .raw(message)
+                    .subject(message.getSubject())
+                    .messageType(msgType != null ? msgType : "ARENA_EVENT")
+                    .requestId(reqId)
+                    .traceId(trace)
+                    .tenantId(tenant)
+                    .lang(lang)
+                    .headers(null)
+                    .bodyJson(body)
+                    .body(body)
+                    .build();
+        }
     }
 
     private void route(NatsJetStreamResponseInfo<Object> responseInfo) {
         String beanName = CommonUtils.toBeanName(responseInfo.getMessageType());
 
         if (!handlerRegistry.contains(beanName)) {
-            log.warn("[HANDLER] not found messageType={} bean={}", responseInfo.getMessageType(), beanName);
+            log.warn("[HANDLER] not found messageType={} bean={} subject={}",
+                    responseInfo.getMessageType(), beanName, responseInfo.getSubject());
             return;
         }
 
         HandlerBase<NatsJetStreamResponseInfo<Object>> handler = handlerRegistry.get(beanName);
         handler.handle(responseInfo);
+    }
+
+    private void sleepSilently(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    @PreDestroy
+    public void stop() {
+        running = false;
+        try {
+            if (sub != null) sub.unsubscribe();
+        } catch (Exception ignored) {}
     }
 }

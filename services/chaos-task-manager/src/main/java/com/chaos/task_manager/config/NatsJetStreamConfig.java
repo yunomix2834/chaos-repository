@@ -30,8 +30,11 @@ public class NatsJetStreamConfig {
     public static final String password = EnvConfig.NATS_PASS;
 
     public static final String STREAM = "TASKS";
-    public static final String SUBJECT_FILTER = "arena.*";
-    public static final String DURABLE = "task-manager";
+
+    public static final String CMD_FILTER = "task.cmd.*";
+    public static final String EVT_FILTER = "task.events.*";
+    public static final String DURABLE_CMD = "task-manager-cmd";
+    public static final String DURABLE_EVT = "task-manager-evt";
 
     private Connection connection;
 
@@ -94,7 +97,7 @@ public class NatsJetStreamConfig {
         try {
             StreamConfiguration streamConfiguration = StreamConfiguration.builder()
                     .name(STREAM)
-                    .subjects("arena.*", "task.cmd.*", "task.events.*")
+                    .subjects("task.cmd.*", "task.events.*")
                     .storageType(StorageType.File)
                     .retentionPolicy(RetentionPolicy.Limits)
                     .maxAge(Duration.ofDays(7))
@@ -109,18 +112,28 @@ public class NatsJetStreamConfig {
                 log.info("[NATS][JS] stream updated {}", STREAM);
             }
 
-            ConsumerConfiguration consumerConfiguration = ConsumerConfiguration.builder()
-                    .durable(DURABLE)
+            ConsumerConfiguration evtConsumer = ConsumerConfiguration.builder()
+                    .durable(DURABLE_EVT)
                     .ackPolicy(AckPolicy.Explicit)
                     .ackWait(Duration.ofSeconds(30))
                     .maxDeliver(10)
-                    .maxAckPending(10_000)
-                    .filterSubject(SUBJECT_FILTER)
+                    .filterSubject(EVT_FILTER)
                     .build();
 
+            ConsumerConfiguration cmdConsumer = ConsumerConfiguration.builder()
+                    .durable(DURABLE_CMD)
+                    .ackPolicy(AckPolicy.Explicit)
+                    .ackWait(Duration.ofSeconds(30))
+                    .maxDeliver(10)
+                    .filterSubject(CMD_FILTER)
+                    .build();
 
-            jetStreamManagement.addOrUpdateConsumer(STREAM, consumerConfiguration);
-            log.info("[NATS][JS] consumer ensured durable={} filter={}", DURABLE, SUBJECT_FILTER);
+            jetStreamManagement.addOrUpdateConsumer(STREAM, evtConsumer);
+            log.info("[NATS][JS] consumer ensured durable={} filter={}", DURABLE_EVT, EVT_FILTER);
+
+            jetStreamManagement.addOrUpdateConsumer(STREAM, cmdConsumer);
+            log.info("[NATS][JS] consumer ensured durable={} filter={}", DURABLE_CMD, CMD_FILTER);
+
             return true;
         } catch (Exception e) {
             log.error("[NATS][JS] ensure infra failed: {}", e.getMessage(), e);

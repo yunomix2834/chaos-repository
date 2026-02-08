@@ -18,11 +18,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ArenaTaskService {
 
-    public static final String messageType = "ARENA_COMMAND";
+    public static final String MESSAGE_TYPE = "ARENA_COMMAND";
 
     private final NatsJetStreamTemplate natsTemplate;
 
-    @Value("${chaos.nats.cmbSubjects}")
+    @Value("${chaos.nats.cmdSubject}")
     @NonFinal
     String cmdSubject;
 
@@ -39,7 +39,7 @@ public class ArenaTaskService {
 
             natsTemplate.publishRequest(
                     cmdSubject,
-                    messageType,
+                    MESSAGE_TYPE,
                     dto,
                     Map.of("X-Lang", "en")
             );
