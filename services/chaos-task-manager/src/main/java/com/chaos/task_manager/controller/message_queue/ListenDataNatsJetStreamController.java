@@ -49,7 +49,7 @@ public class ListenDataNatsJetStreamController {
     public void start() throws Exception {
         String durableEvt = durable + "-evt";
 
-        ConsumerConfiguration cc = ConsumerConfiguration.builder()
+        ConsumerConfiguration consumerConfiguration = ConsumerConfiguration.builder()
                 .durable(durableEvt)
                 .ackPolicy(AckPolicy.Explicit)
                 .ackWait(Duration.ofSeconds(30))
@@ -58,13 +58,13 @@ public class ListenDataNatsJetStreamController {
                 .filterSubject(evtSubject)
                 .build();
 
-        PullSubscribeOptions pso = PullSubscribeOptions.builder()
+        PullSubscribeOptions pullSubscribeOptions = PullSubscribeOptions.builder()
                 .stream(stream)
                 .durable(durableEvt)
-                .configuration(cc)
+                .configuration(consumerConfiguration)
                 .build();
 
-        sub = jetStream.subscribe(evtSubject, pso);
+        sub = jetStream.subscribe(evtSubject, pullSubscribeOptions);
 
         log.info("[NATS][EVT][PULL-SUB] stream={} subject={} durable={}", stream, evtSubject, durableEvt);
 
@@ -93,8 +93,8 @@ public class ListenDataNatsJetStreamController {
 
     private void handleMessage(Message message) {
         try {
-            NatsJetStreamResponseInfo<Object> ctx = parseToResponseInfo(message);
-            route(ctx);
+            NatsJetStreamResponseInfo<Object> responseInfo = parseToResponseInfo(message);
+            route(responseInfo);
             message.ack();
         } catch (Exception e) {
             log.error("[NATS][EVT] handle failed: {}", e.getMessage(), e);
@@ -109,19 +109,19 @@ public class ListenDataNatsJetStreamController {
         byte[] data = message.getData();
 
         try {
-            NatsJetStreamRequestInfo req = CommonUtils.OBJECT_MAPPER.readValue(data, NatsJetStreamRequestInfo.class);
+            NatsJetStreamRequestInfo requestInfo = CommonUtils.OBJECT_MAPPER.readValue(data, NatsJetStreamRequestInfo.class);
 
             return NatsJetStreamResponseInfo.builder()
                     .raw(message)
-                    .subject(req.getSubject())
-                    .messageType(req.getMessageType())
-                    .requestId(req.getRequestId())
-                    .traceId(req.getTraceId())
-                    .tenantId(req.getTenantId())
-                    .lang(req.getLang())
-                    .headers(req.getHeaders())
-                    .bodyJson(req.getBody())
-                    .body(req.getBody())
+                    .subject(requestInfo.getSubject())
+                    .messageType(requestInfo.getMessageType())
+                    .requestId(requestInfo.getRequestId())
+                    .traceId(requestInfo.getTraceId())
+                    .tenantId(requestInfo.getTenantId())
+                    .lang(requestInfo.getLang())
+                    .headers(requestInfo.getHeaders())
+                    .bodyJson(requestInfo.getBody())
+                    .body(requestInfo.getBody())
                     .build();
 
         } catch (Exception ignored) {
