@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-k8s-agent
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chaos-k8s-agent
+  template:
+    metadata:
+      labels:
+        app: chaos-k8s-agent
+    spec:
+      serviceAccountName: chaos-k8s-agent
+      containers:
+        - name: agent
+          image: yourrepo/chaos-k8s-agent:latest
+          env:
+            - name: NATS_URL
+              value: "nats://nats:4222"
+            - name: NATS_STREAM
+              value: "TASKS"
+            - name: NATS_CMD_SUBJECT
+              value: "task.cmd.arena"
+            - name: NATS_EVT_SUBJECT
+              value: "task.events.arena"
+            - name: NATS_DURABLE
+              value: "chaos-k8s-agent"
+            - name: K8S_NAMESPACE_DEFAULT
+              value: "default"
+            - name: DRY_RUN
+              value: "false"
