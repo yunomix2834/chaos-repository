@@ -73,7 +73,7 @@ func parseMessage(m *nats.Msg) (domain.CommandEnvelope, error) {
 				Lang:        headerFirst(m, "X-Lang"),
 				Subject:     m.Subject,
 				MessageType: headerFirst(m, "X-Message-Type"),
-				CreatedAt:   time.Now(),
+				CreatedAt:   time.Now().UTC().Format(time.RFC3339Nano),
 			},
 			Command: cmd,
 			Ack:     func() error { return m.Ack() },

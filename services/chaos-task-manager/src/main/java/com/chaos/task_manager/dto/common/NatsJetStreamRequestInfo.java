@@ -24,7 +24,7 @@ public class NatsJetStreamRequestInfo {
     String tenantId;
     String lang;
 
-    Instant createdAt;
+    String createdAt;
 
     String body;
 

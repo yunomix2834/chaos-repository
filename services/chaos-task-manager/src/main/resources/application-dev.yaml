@@ -14,5 +14,3 @@ chaos:
     stream: ${NATS_STREAM:TASKS}
     cmdSubject: ${NATS_CMD_SUBJECT:task.cmd.arena}
     evtSubject: ${NATS_EVT_SUBJECT:task.events.*}
-    durable: ${NATS_DURABLE:task-manager}
-    queue: ${NATS_QUEUE:task-manager-q}

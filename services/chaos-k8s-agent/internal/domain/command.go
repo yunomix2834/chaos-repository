@@ -1,7 +1,5 @@
 package domain
 
-import "time"
-
 type NatsJetStreamRequestInfo struct {
 	Subject     string            `json:"subject"`
 	MessageType string            `json:"messageType"`
@@ -9,7 +7,7 @@ type NatsJetStreamRequestInfo struct {
 	TraceID     string            `json:"traceId"`
 	TenantID    string            `json:"tenantId"`
 	Lang        string            `json:"lang"`
-	CreatedAt   time.Time         `json:"createdAt"`
+	CreatedAt   string            `json:"createdAt"`
 	Body        string            `json:"body"`
 	Headers     map[string]string `json:"headers"`
 }

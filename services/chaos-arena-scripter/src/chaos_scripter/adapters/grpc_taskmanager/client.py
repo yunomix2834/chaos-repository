@@ -57,7 +57,7 @@ class TaskManagerGrpcClient:
         log.info("[GRPC][SUBMIT] target=%s arena=%s task=%s type=%s target=%s value=%s",
                  self._target, task.arena_id, task.task_id, task.type, task.target, task.value)
 
-        ack = self._stub.submit(req, timeout=self._timeout, metadata=md.to_tuples())
+        ack = self._stub.Submit(req, timeout=self._timeout, metadata=md.to_tuples())
         return SubmitResult(
             arena_id=ack.arena_id,
             task_id=ack.task_id,

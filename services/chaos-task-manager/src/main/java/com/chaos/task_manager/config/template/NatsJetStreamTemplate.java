@@ -47,7 +47,7 @@ public class NatsJetStreamTemplate {
                     .traceId(hdr.get("X-Trace-Id"))
                     .tenantId(hdr.get("X-Tenant-Id"))
                     .lang(hdr.get("X-Lang"))
-                    .createdAt(Instant.now())
+                    .createdAt(Instant.now().toString())
                     .headers(hdr)
                     .body(bodyJson)
                     .build();

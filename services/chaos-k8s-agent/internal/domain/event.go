@@ -1,7 +1,5 @@
 package domain
 
-import "time"
-
 type TaskStatus string
 
 const (
@@ -18,7 +16,7 @@ type ArenaEvent struct {
 	Value     int        `json:"value"`
 	Status    TaskStatus `json:"status"`
 	Message   string     `json:"message"`
-	Timestamp time.Time  `json:"ts"`
+	Timestamp string     `json:"ts"`
 
 	TraceID   string `json:"traceId,omitempty"`
 	RequestID string `json:"requestId,omitempty"`

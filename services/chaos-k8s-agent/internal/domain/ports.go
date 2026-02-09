@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"time"
 )
 
 type MsgMeta struct {
@@ -12,7 +11,7 @@ type MsgMeta struct {
 	Lang        string
 	Subject     string
 	MessageType string
-	CreatedAt   time.Time
+	CreatedAt   string
 }
 
 type CommandEnvelope struct {
