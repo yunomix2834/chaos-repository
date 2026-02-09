@@ -30,6 +30,7 @@ def main() -> None:
         dispatcher=dispatcher,
         scenario_runner=runner,
         guild_id=settings.discord_guild_id,
+        channel_id=settings.discord_channel_id,
     )
 
     try:

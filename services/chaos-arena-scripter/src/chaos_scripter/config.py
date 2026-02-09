@@ -10,6 +10,7 @@ class Settings(BaseModel):
     # Discord
     discord_token: str = Field(default_factory=lambda: os.getenv("DISCORD_TOKEN", ""))
     discord_guild_id: int | None = Field(default_factory=lambda: int(os.getenv("DISCORD_GUILD_ID", "0")) or None)
+    discord_channel_id: int = Field(default_factory=lambda: int(os.getenv("DISCORD_CHANNEL_ID", "0")) or None)
 
     # gRPC TaskManager
     grpc_target: str = Field(default_factory=lambda: os.getenv("TASKMANAGER_GRPC_TARGET", "localhost:9999"))
