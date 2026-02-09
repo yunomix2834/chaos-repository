@@ -11,8 +11,8 @@ import lombok.experimental.FieldDefaults;
 public class ArenaCommandDto {
     String arenaId;
     String taskId;
-    String type;
-    String target;
-    Integer value;
+    String type;     // SCALE | KILL_PODS
+    String target;   // deployment/cart OR ns/deployment/cart OR app=cart
+    Integer value;   // replicas OR percent
     String reason;
 }

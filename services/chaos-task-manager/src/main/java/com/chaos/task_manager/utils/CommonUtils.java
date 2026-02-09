@@ -28,6 +28,10 @@ public class CommonUtils {
         return camel + "Handler";
     }
 
+    public static String toUpperCase(String s) {
+        return s == null ? "" : s.trim().toUpperCase();
+    }
+
     public static String toCamel(String s) {
         String[] parts = s.split("[^a-z0-9]+");
         if (parts.length == 0) {
