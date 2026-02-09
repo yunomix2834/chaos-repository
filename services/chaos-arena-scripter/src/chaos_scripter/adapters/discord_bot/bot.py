@@ -4,7 +4,7 @@ import logging
 import discord
 from discord import app_commands
 
-from chaos_scripter.domain.models import ArenaTask, new_uuid
+from chaos_scripter.domain.models import ArenaTask, new_uuid, TaskType
 from chaos_scripter.app.dispatcher import TaskDispatcher
 from chaos_scripter.app.scenario_runner import ScenarioRunner
 
@@ -26,152 +26,118 @@ class ChaosDiscordBot(discord.Client):
     def _allowed(self, interaction: discord.Interaction) -> bool:
         if self.channel_id is None:
             return True
-        return interaction.channel.id == self.channel_id
+        return interaction.channel_id == self.channel_id
+
+    async def _deny_if_not_allowed(self, interaction: discord.Interaction) -> bool:
+        if self._allowed(interaction):
+            return False
+        await interaction.response.send_message("Only test in channel has been config.", ephemeral=True)
+        return True
 
     def _register_commands(self) -> None:
-        @self.tree.command(name="spawn", description="Spawn a chaos task to TaskManager via gRPC")
+        @self.tree.command(name="scale", description="Scale deployment to replicas (via TaskManager)")
         @app_commands.describe(
-            type="Task type e.g. KILL_PODS, SCALE",
-            target='Target e.g. "app=cart" or "deployment/cart"',
-            value="Integer value e.g. 30 or replicas",
-            reason="Reason for audit",
-            arena_id="Optional arena id (UUID). If empty, auto generate",
+            target="deployment/<name> OR <ns>/deployment/<name>",
+            replicas="replicas > 0",
+            reason="audit reason",
+            arena_id="optional arena uuid"
         )
-        async def spawn(
-                interaction: discord.Interaction,
-                type: str,
-                target: str,
-                value: int = 0,
-                reason: str = "discord",
-                arena_id: str | None = None,
-        ):
-            if not self._allowed(interaction):
-                await interaction.response.send_message(
-                    "Chỉ được test trong channel đã cấu hình.", ephemeral=True
-                )
+        async def scale(interaction: discord.Interaction, target: str, replicas: int, reason: str = "discord", arena_id: str | None = None):
+            if await self._deny_if_not_allowed(interaction):
                 return
-
             await interaction.response.defer(thinking=True)
-            user = f"{interaction.user.name}#{interaction.user.discriminator}"
 
             task = ArenaTask(
                 arena_id=arena_id or new_uuid(),
                 task_id=new_uuid(),
-                type=type.strip(),
+                type=TaskType.SCALE.value,
                 target=target.strip(),
-                value=int(value),
+                value=int(replicas),
                 reason=reason.strip(),
-                requested_by=user,
+                requested_by=interaction.user.name,
             )
-
             try:
                 ack = self.dispatcher.submit(task)
-                await interaction.followup.send(
-                    "✅ Submitted\n"
-                    f"- arena_id: `{ack.arena_id}`\n"
-                    f"- task_id: `{ack.task_id}`\n"
-                    f"- accepted: `{ack.accepted}`\n"
-                    f"- message: `{ack.message}`"
-                )
+                await interaction.followup.send(f"✅ SCALE submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`")
             except Exception as e:
-                log.exception("spawn failed")
-                await interaction.followup.send(f"❌ submit failed: `{e}`")
+                log.exception("scale failed")
+                await interaction.followup.send(f"❌ scale failed: `{e}`")
 
-        @self.tree.command(name="run_scenario", description="Run a YAML scenario (submit multiple tasks)")
+        @self.tree.command(name="kill_pods", description="Kill percent of pods by label selector (via TaskManager)")
         @app_commands.describe(
-            name="Scenario file name without .yaml",
-            arena_id="Optional arena id (UUID). If empty, auto generate",
+            selector="label selector, e.g. app=cart",
+            percent="1..100",
+            reason="audit reason",
+            arena_id="optional arena uuid"
         )
-        async def run_scenario(
-                interaction: discord.Interaction,
-                name: str,
-                arena_id: str | None = None,
-        ):
-
-            if not self._allowed(interaction):
-                await interaction.response.send_message(
-                    "Chỉ được test trong channel đã cấu hình.", ephemeral=True
-                )
+        async def kill_pods(interaction: discord.Interaction, selector: str, percent: int, reason: str = "discord", arena_id: str | None = None):
+            if await self._deny_if_not_allowed(interaction):
                 return
+            await interaction.response.defer(thinking=True)
 
+            task = ArenaTask(
+                arena_id=arena_id or new_uuid(),
+                task_id=new_uuid(),
+                type=TaskType.KILL_PODS.value,
+                target=selector.strip(),
+                value=int(percent),
+                reason=reason.strip(),
+                requested_by=interaction.user.name,
+            )
+            try:
+                ack = self.dispatcher.submit(task)
+                await interaction.followup.send(f"✅ KILL_PODS submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`")
+            except Exception as e:
+                log.exception("kill_pods failed")
+                await interaction.followup.send(f"❌ kill_pods failed: `{e}`")
+
+        @self.tree.command(name="rollback_scale", description="Rollback SCALE to previous replicas (via TaskManager)")
+        @app_commands.describe(
+            namespace="namespace, e.g. default",
+            deployment="deployment name, e.g. cart",
+            previous_replicas="replicas to rollback to",
+            reason="audit reason",
+            arena_id="optional arena uuid"
+        )
+        async def rollback_scale(interaction: discord.Interaction, namespace: str, deployment: str, previous_replicas: int, reason: str = "discord", arena_id: str | None = None):
+            if await self._deny_if_not_allowed(interaction):
+                return
+            await interaction.response.defer(thinking=True)
+
+            rb_target = rollback_scale_target(namespace.strip(), deployment.strip(), int(previous_replicas))
+
+            task = ArenaTask(
+                arena_id=arena_id or new_uuid(),
+                task_id=new_uuid(),
+                type=TaskType.ROLLBACK.value,
+                target=rb_target,
+                value=0,
+                reason=reason.strip(),
+                requested_by=interaction.user.name,
+            )
+            try:
+                ack = self.dispatcher.submit(task)
+                await interaction.followup.send(f"✅ ROLLBACK(SCALE) submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`\n- target=`{rb_target}`")
+            except Exception as e:
+                log.exception("rollback_scale failed")
+                await interaction.followup.send(f"❌ rollback_scale failed: `{e}`")
+
+
+        @self.tree.command(name="run_scenario", description="Run a YAML scenario by file name in scenarios/")
+        async def run_scenario(interaction: discord.Interaction, name: str, arena_id: str | None = None):
+            if await self._deny_if_not_allowed(interaction):
+                return
             await interaction.response.defer(thinking=True)
             try:
                 results = self.scenario_runner.run(name=name.strip(), arena_id=arena_id)
                 accepted = sum(1 for r in results if r.accepted)
                 arena = results[0].arena_id if results else (arena_id or "unknown")
-                await interaction.followup.send(
-                    f"🏁 Scenario `{name}` submitted\n"
-                    f"- arena_id: `{arena}`\n"
-                    f"- tasks: `{len(results)}` accepted=`{accepted}`"
-                )
+                await interaction.followup.send(f"🏁 Scenario `{name}` submitted arena=`{arena}` tasks=`{len(results)}` accepted=`{accepted}`")
             except Exception as e:
                 log.exception("run_scenario failed")
                 await interaction.followup.send(f"❌ run_scenario failed: `{e}`")
 
-        @self.tree.command(name="run_scenario_file", description="Upload YAML scenario file and run it")
-        @app_commands.describe(file="Upload .yaml/.yml file", arena_id="Optional arena id (UUID)")
-        async def run_scenario_file(
-            interaction: discord.Interaction,
-            file: discord.Attachment,
-            arena_id: str | None = None,
-        ):
-            if not self._allowed(interaction):
-                await interaction.response.send_message(
-                    "Chỉ được test trong channel đã cấu hình.", ephemeral=True
-                )
-                return
-
-            await interaction.response.defer(thinking=True)
-
-            fname = (file.filename or "").lower()
-            if not (fname.endswith(".yaml") or fname.endswith(".yml")):
-                await interaction.followup.send("❌ File phải là `.yaml` hoặc `.yml`.")
-                return
-
-            try:
-                import yaml
-                raw = await file.read()
-                spec = yaml.safe_load(raw.decode("utf-8", errors="replace")) or {}
-                steps = spec.get("steps", [])
-
-                if not isinstance(steps, list) or not steps:
-                    await interaction.followup.send("❌ YAML không có `steps` hoặc `steps` rỗng.")
-                    return
-
-                real_arena = arena_id or new_uuid()
-                user = f"{interaction.user.name}#{interaction.user.discriminator}"
-                results = []
-
-                for step in steps:
-                    t = ArenaTask(
-                        arena_id=real_arena,
-                        task_id=new_uuid(),
-                        type=str(step.get("type", "")).strip(),
-                        target=str(step.get("target", "")).strip(),
-                        value=int(step.get("value", 0) or 0),
-                        reason=str(step.get("reason", f"uploaded:{file.filename}")).strip(),
-                        requested_by=user,
-                    )
-                    if not t.type or not t.target:
-                        await interaction.followup.send(f"❌ Step invalid: `{step}`")
-                        return
-                    results.append(self.dispatcher.submit(t))
-
-                accepted = sum(1 for r in results if r.accepted)
-                await interaction.followup.send(
-                    f"📎 Ran `{file.filename}`\n"
-                    f"- arena_id: `{real_arena}`\n"
-                    f"- tasks: `{len(results)}` accepted=`{accepted}`"
-                )
-
-            except Exception as e:
-                log.exception("run_scenario_file failed")
-                await interaction.followup.send(f"❌ run_scenario_file failed: `{e}`")
-
     async def setup_hook(self) -> None:
-        cmds = [c.name for c in self.tree.get_commands()]
-        log.info("Commands in code: %s", cmds)
-
         if self.guild_id:
             guild = discord.Object(id=self.guild_id)
             self.tree.copy_global_to(guild=guild)

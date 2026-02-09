@@ -1,0 +1,15 @@
+steps:
+  - type: SCALE
+    target: deployment/cart
+    value: 6
+    reason: "scale up"
+
+  - type: KILL_PODS
+    target: "app=cart"
+    value: 30
+    reason: "kill 30%"
+
+  - type: ROLLBACK
+    target: "SCALE|default|cart|3"
+    value: 0
+    reason: "rollback scale to previous"

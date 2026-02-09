@@ -19,12 +19,11 @@ def main() -> None:
 
     grpc_client = TaskManagerGrpcClient(
         target=settings.grpc_target,
-        timeout_sec=settings.grpc_timeout_sec
+        timeout_sec=settings.grpc_timeout_sec,
     )
 
-    base_md = GrpcMetadata(lang=settings.lang, tenant_id=settings.tenant_id)
-    dispatcher = TaskDispatcher(grpc_client=grpc_client, base_md=base_md)
-    runner = ScenarioRunner(dispatcher=dispatcher, scenario_dir=settings.scenario_dir)
+    dispatcher = TaskDispatcher(grpc_client, GrpcMetadata(lang=settings.lang, tenant_id=settings.tenant_id))
+    runner = ScenarioRunner(dispatcher, settings.scenario_dir)
 
     bot = ChaosDiscordBot(
         dispatcher=dispatcher,

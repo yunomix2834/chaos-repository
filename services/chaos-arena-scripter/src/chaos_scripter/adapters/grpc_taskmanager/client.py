@@ -19,7 +19,7 @@ class GrpcMetadata:
     request_id: str | None = None
 
     def to_tuples(self) -> list[tuple[str, str]]:
-        # gRPC metadata keys phải lowercase
+        # gRPC metadata keys must be lowercase
         md: list[tuple[str, str]] = []
         if self.lang:
             md.append(("x-lang", self.lang))

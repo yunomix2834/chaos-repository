@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from enum import Enum
 from pydantic import BaseModel, Field
-from typing import Literal
 import uuid
 import time
 
@@ -10,6 +10,14 @@ def new_uuid() -> str:
 
 def now_ms() -> int:
     return int(time.time() * 1000)
+
+class TaskType(str, Enum):
+    KILL_PODS = "KILL_PODS"
+    SCALE = "SCALE"
+    ROLLBACK = "ROLLBACK"
+
+def rollback_scale_target(ns: str, deploy: str, previous_replicas: int) -> str:
+    return f"SCALE|{ns}|{deploy}|{int(previous_replicas)}"
 
 class ArenaTask(BaseModel):
     arena_id: str = Field(default_factory=new_uuid)

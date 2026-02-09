@@ -8,15 +8,12 @@ def main() -> int:
 
     # chaos-repository/services/chaos-arena-scripter/src/chaos_scripter/scripts/gen_arena_proto.py
     here = Path(__file__).resolve()
-    print("here", here)
 
     # service_dir = chaos-repository/services/chaos-arena-scripter
     service_dir = here.parents[3]
-    print("service_dir", service_dir)
 
     # repo_root = chaos-repository
     repo_root = here.parents[5]
-    print("repo_root", repo_root)
 
     proto_dir = repo_root / "proto"
     proto_file = proto_dir / "arena.proto"
@@ -37,8 +34,7 @@ def main() -> int:
     ]
 
     print("[CMD]", " ".join(cmd))
-    p = subprocess.run(cmd, cwd=str(service_dir))
-    return p.returncode
+    return subprocess.run(cmd, cwd=str(service_dir)).returncode
 
 if __name__ == "__main__":
     raise SystemExit(main())

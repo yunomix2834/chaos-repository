@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import logging
 from chaos_scripter.domain.models import ArenaTask, SubmitResult
 from chaos_scripter.adapters.grpc_taskmanager.client import TaskManagerGrpcClient, GrpcMetadata
-
-log = logging.getLogger(__name__)
 
 class TaskDispatcher:
     def __init__(self, grpc_client: TaskManagerGrpcClient, base_md: GrpcMetadata) -> None:
