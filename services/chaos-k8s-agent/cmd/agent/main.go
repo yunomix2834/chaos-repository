@@ -40,6 +40,7 @@ func main() {
 	reg := app.NewRegistry(
 		&k8s.ScaleHandler{Exec: exec, DefaultNS: cfg.NamespaceDefault},
 		&k8s.KillPodsHandler{Exec: exec, DefaultNS: cfg.NamespaceDefault},
+		&k8s.RollbackHandler{Exec: exec, DefaultNS: cfg.NamespaceDefault},
 	)
 	router := app.NewRouter(reg)
 
