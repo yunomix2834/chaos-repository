@@ -1,3 +1,4 @@
+name: chaos-stack
 services:
   nats:
     # nats://jetstream_app:jetstream_app123@localhost:4222

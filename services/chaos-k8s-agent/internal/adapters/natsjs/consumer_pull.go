@@ -1,11 +1,12 @@
 package natsjs
 
 import (
-	"chaos-k8s-agent/internal/domain"
 	"context"
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"chaos-k8s-agent/internal/domain"
 
 	"github.com/nats-io/nats.go"
 )
@@ -34,14 +35,11 @@ func (c *PullConsumer) Run(ctx context.Context, handler func(context.Context, do
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			// pull then fetch
-			if err := sub.Pull(c.Batch); err != nil {
-				time.Sleep(200 * time.Millisecond)
-				continue
-			}
-
 			msgs, err := sub.Fetch(c.Batch, nats.MaxWait(c.Timeout))
-			if err != nil && err != nats.ErrTimeout {
+			if err != nil {
+				if err == nats.ErrTimeout {
+					continue
+				}
 				time.Sleep(300 * time.Millisecond)
 				continue
 			}
@@ -52,7 +50,7 @@ func (c *PullConsumer) Run(ctx context.Context, handler func(context.Context, do
 					_ = m.Nak()
 					continue
 				}
-				_ = handler(ctx, env) // ack/nak handled inside
+				_ = handler(ctx, env)
 			}
 		}
 	}
@@ -95,7 +93,6 @@ func parseMessage(m *nats.Msg) (domain.CommandEnvelope, error) {
 		MessageType: req.MessageType,
 		CreatedAt:   req.CreatedAt,
 	}
-	// header fallback if fields empty
 	if meta.RequestID == "" {
 		meta.RequestID = headerFirst(m, "X-Request-Id")
 	}
