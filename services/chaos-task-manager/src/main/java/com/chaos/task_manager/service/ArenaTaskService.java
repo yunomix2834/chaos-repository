@@ -33,7 +33,9 @@ public class ArenaTaskService {
 
     public Mono<TaskAck> submitFromScript(TaskCommand cmd) {
         return Mono.fromCallable(() -> {
-            String type = CommonUtils.toUpperCase(cmd.getType());
+            String type = CommonUtils.normalizeText(CommonUtils.toUpperCase(cmd.getType()));
+            String target = CommonUtils.normalizeText(cmd.getTarget());
+            String reason = CommonUtils.normalizeText(cmd.getReason());
 
             ArenaCommandDto dto = switch (type) {
                 case "SCALE" -> {
@@ -42,9 +44,9 @@ public class ArenaTaskService {
                             .arenaId(cmd.getArenaId())
                             .taskId(cmd.getTaskId())
                             .type("SCALE")
-                            .target(cmd.getTarget().trim())
+                            .target(target)
                             .value(cmd.getValue())
-                            .reason(cmd.getReason())
+                            .reason(reason)
                             .build();
                 }
                 case "KILL_PODS" -> {
@@ -53,9 +55,9 @@ public class ArenaTaskService {
                             .arenaId(cmd.getArenaId())
                             .taskId(cmd.getTaskId())
                             .type("KILL_PODS")
-                            .target(cmd.getTarget().trim())
+                            .target(target)
                             .value(cmd.getValue())
-                            .reason(cmd.getReason())
+                            .reason(reason)
                             .build();
                 }
                 case "ROLLBACK" -> {
@@ -72,13 +74,15 @@ public class ArenaTaskService {
                     String scaleTarget = spec.getNamespace() + "/deployment/" + spec.getName();
                     CommandValidator.validateScale(scaleTarget, spec.getValue());
 
+                    String rbReason = "ROLLBACK(" + target + "): " + (reason == null ? "" : reason);
+
                     yield ArenaCommandDto.builder()
                             .arenaId(cmd.getArenaId())
                             .taskId(cmd.getTaskId())
                             .type("SCALE")
                             .target(scaleTarget)
                             .value(spec.getValue())
-                            .reason("ROLLBACK(" + cmd.getTarget() + "): " + (cmd.getReason() == null ? "" : cmd.getReason()))
+                            .reason(rbReason)
                             .build();
                 }
                 default -> throw new IllegalArgumentException("unsupported type=" + cmd.getType());

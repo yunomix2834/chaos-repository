@@ -4,6 +4,7 @@ import (
 	"chaos-k8s-agent/internal/domain"
 	"context"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -33,7 +34,10 @@ func NewRouter(reg *HandlerRegistry) *Router {
 }
 
 func (rt *Router) Dispatch(ctx context.Context, cmd domain.ArenaCommand) (string, error) {
-	h, ok := rt.reg.Resolve(cmd.Type)
+	typ := strings.ToUpper(strings.TrimSpace(cmd.Type))
+	log.Printf("[DISPATCH] type=%s target=%s value=%d", typ, cmd.Target, cmd.Value)
+
+	h, ok := rt.reg.Resolve(typ)
 	if !ok {
 		return "", fmt.Errorf("no handler for type=%s", cmd.Type)
 	}

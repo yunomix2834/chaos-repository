@@ -4,6 +4,7 @@ import (
 	"chaos-k8s-agent/internal/domain"
 	"context"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -19,6 +20,9 @@ func (h *ScaleHandler) Handle(ctx context.Context, cmd domain.ArenaCommand) (str
 	if err != nil {
 		return "", err
 	}
+
+	log.Printf("[K8S][SCALE] ns=%s deploy=%s replicas=%d dry=%v", ns, name, cmd.Value, h.Exec.(*Executor).DryRun)
+
 	if cmd.Value <= 0 {
 		return "", fmt.Errorf("replicas must be > 0")
 	}
@@ -37,12 +41,18 @@ func (h *KillPodsHandler) Type() string { return "KILL_PODS" }
 
 func (h *KillPodsHandler) Handle(ctx context.Context, cmd domain.ArenaCommand) (string, error) {
 	ns, selector := ParseSelectorTarget(cmd.Target, h.DefaultNS)
+
+	log.Printf("[K8S][KILL] ns=%s selector=%s percent=%d", ns, selector, cmd.Value)
+
 	selector = strings.TrimSpace(selector)
 
 	killed, total, err := h.Exec.KillPodsBySelector(ctx, ns, selector, cmd.Value)
 	if err != nil {
 		return "", err
 	}
+
+	log.Printf("[K8S][KILL] result killed=%d total=%d", killed, total)
+
 	return fmt.Sprintf("killed %d/%d pods selector=%q ns=%s", killed, total, selector, ns), nil
 }
 

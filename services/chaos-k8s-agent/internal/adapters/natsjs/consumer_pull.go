@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"chaos-k8s-agent/internal/domain"
@@ -30,6 +31,9 @@ func (c *PullConsumer) Run(ctx context.Context, handler func(context.Context, do
 		return fmt.Errorf("pull subscribe failed: %w", err)
 	}
 
+	log.Printf("[NATS][SUB] stream=%s subject=%s durable=%s batch=%d timeout=%s",
+		c.Stream, c.Subject, c.Durable, c.Batch, c.Timeout)
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -40,8 +44,13 @@ func (c *PullConsumer) Run(ctx context.Context, handler func(context.Context, do
 				if err == nats.ErrTimeout {
 					continue
 				}
+				log.Printf("[NATS][FETCH] error=%v", err)
 				time.Sleep(300 * time.Millisecond)
 				continue
+			}
+
+			if len(msgs) > 0 {
+				log.Printf("[NATS][FETCH] got=%d", len(msgs))
 			}
 
 			for _, m := range msgs {
@@ -50,7 +59,16 @@ func (c *PullConsumer) Run(ctx context.Context, handler func(context.Context, do
 					_ = m.Nak()
 					continue
 				}
-				_ = handler(ctx, env)
+				log.Printf("[CMD][RECV] arena=%s task=%s type=%s target=%s value=%d reason=%s reqId=%s traceId=%s createdAt=%s",
+					env.Command.ArenaID, env.Command.TaskID, env.Command.Type, env.Command.Target, env.Command.Value, env.Command.Reason,
+					env.Meta.RequestID, env.Meta.TraceID, env.Meta.CreatedAt,
+				)
+
+				if err := handler(ctx, env); err != nil {
+					log.Printf("[CMD][HANDLE] failed task=%s err=%v", env.Command.TaskID, err)
+				} else {
+					log.Printf("[CMD][HANDLE] ok task=%s", env.Command.TaskID)
+				}
 			}
 		}
 	}

@@ -18,6 +18,42 @@ public class CommonUtils {
         }
     }
 
+    // Normalize message from scripter tool before send to k8s go agent
+    public static String normalizeText(String s) {
+        if (s == null) {
+            return null;
+        }
+        String t = s.trim();
+
+        if (t.contains("\\\"")) {
+            t = t.replace("\\\"", "\"");
+        }
+
+        t = stripWrappingQuotes(t);
+        t = stripWrappingQuotes(t);
+
+        return t.trim();
+    }
+
+    private static String stripWrappingQuotes(String t) {
+        if (t == null) {
+            return null;
+        }
+        String s = t.trim();
+        while (s.length() >= 2) {
+            char a = s.charAt(0);
+            char b = s.charAt(s.length() - 1);
+
+            if ((a == '"' && b == '"') || (a == '\'' && b == '\'')) {
+                s = s.substring(1, s.length() - 1).trim();
+                continue;
+            }
+            break;
+        }
+
+        return s;
+    }
+
     public static String toBeanName(String messageType) {
         // ARENA_COMMAND -> arenaCommandHandler
         if (messageType == null || messageType.isBlank()) {
