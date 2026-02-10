@@ -1,8 +1,8 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '4.0.2'
-	id 'io.spring.dependency-management' version '1.1.7'
-	id 'com.google.protobuf' version '0.9.5'
+    id 'java'
+    id 'org.springframework.boot' version '4.0.2'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.google.protobuf' version '0.9.5'
 }
 
 group = 'com.chaos'
@@ -10,123 +10,123 @@ version = '0.0.1-SNAPSHOT'
 description = 'Chaos Task Manager'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 ext {
-	set('springCloudVersion', "2025.1.0")
-	set('springGrpcVersion', "1.0.2")
-	set('springShellVersion', "4.0.1")
+    set('springCloudVersion', "2025.1.0")
+    set('springGrpcVersion', "1.0.2")
+    set('springShellVersion', "4.0.1")
 
-	set('grpcSpringBootStarterVersion', "3.1.0.RELEASE")
-	set('grpcVersion', "1.64.0")
-	set('protobufVersion', "3.25.3")
-	set('natsVersion', "2.20.5")
+    set('grpcSpringBootStarterVersion', "3.1.0.RELEASE")
+    set('grpcVersion', "1.64.0")
+    set('protobufVersion', "3.25.3")
+    set('natsVersion', "2.20.5")
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 //	implementation 'org.springframework.boot:spring-boot-starter-elasticsearch'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation "com.fasterxml.jackson.core:jackson-databind"
 
-	// gRPC client
-	implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
-	implementation "io.grpc:grpc-protobuf:${grpcVersion}"
-	implementation "io.grpc:grpc-stub:${grpcVersion}"
-	implementation "io.grpc:grpc-services:${grpcVersion}"
-	implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpringBootStarterVersion}"
-	implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpringBootStarterVersion}"
+    // gRPC client
+    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    implementation "io.grpc:grpc-services:${grpcVersion}"
+    implementation "net.devh:grpc-server-spring-boot-starter:${grpcSpringBootStarterVersion}"
+    implementation "net.devh:grpc-client-spring-boot-starter:${grpcSpringBootStarterVersion}"
 
-	// Fix for gRPC
-	implementation "javax.annotation:javax.annotation-api:1.3.2"
+    // Fix for gRPC
+    implementation "javax.annotation:javax.annotation-api:1.3.2"
 
-	// Protobuf runtime
-	implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
+    // Protobuf runtime
+    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
 
-	// NATS JetStream
-	implementation "io.nats:jnats:${natsVersion}"
+    // NATS JetStream
+    implementation "io.nats:jnats:${natsVersion}"
 
-	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
-	implementation 'org.springframework.shell:spring-shell-starter'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.shell:spring-shell-starter'
 
-	// POI
-	implementation 'org.apache.poi:poi:5.5.1'
-	implementation 'org.apache.poi:poi-ooxml:5.5.1'
+    // POI
+    implementation 'org.apache.poi:poi:5.5.1'
+    implementation 'org.apache.poi:poi-ooxml:5.5.1'
 
-	// Lombok
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
-	// Test
-	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-elasticsearch-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webflux-test'
-	testImplementation 'org.springframework.shell:spring-shell-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-elasticsearch-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux-test'
+    testImplementation 'org.springframework.shell:spring-shell-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 dependencyManagement {
-	imports {
-		mavenBom "org.springframework.shell:spring-shell-dependencies:${springShellVersion}"
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-	}
+    imports {
+        mavenBom "org.springframework.shell:spring-shell-dependencies:${springShellVersion}"
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
 }
 
 protobuf {
-	protoc {
-		artifact = "com.google.protobuf:protoc:${protobufVersion}"
-	}
-	plugins {
-		grpc {
-			artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
-		}
-	}
-	generatedFilesBaseDir = "$projectDir/build/generated"
-	generateProtoTasks {
-		all().configureEach { task ->
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+        }
+    }
+    generatedFilesBaseDir = "$projectDir/build/generated"
+    generateProtoTasks {
+        all().configureEach { task ->
 
-			task.builtins {
-				java {}
-			}
+            task.builtins {
+                java {}
+            }
 
-			task.plugins {
-				grpc {}
-			}
+            task.plugins {
+                grpc {}
+            }
 
-			task.generateDescriptorSet = true
-			task.descriptorSetOptions.includeImports = true
-			task.descriptorSetOptions.includeSourceInfo = true
-		}
-	}
+            task.generateDescriptorSet = true
+            task.descriptorSetOptions.includeImports = true
+            task.descriptorSetOptions.includeSourceInfo = true
+        }
+    }
 }
 
 
 sourceSets {
-	main {
-		proto {
-			srcDir "${projectDir}/../../proto"
-		}
-		java {
-			srcDirs "$projectDir/src/main/java",
-					"$projectDir/build/generated/source/proto/main/java",
-					"$projectDir/build/generated/source/proto/main/grpc"
-		}
-	}
+    main {
+        proto {
+            srcDir "${projectDir}/../../proto"
+        }
+        java {
+            srcDirs "$projectDir/src/main/java",
+                    "$projectDir/build/generated/source/proto/main/java",
+                    "$projectDir/build/generated/source/proto/main/grpc"
+        }
+    }
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

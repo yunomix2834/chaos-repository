@@ -33,13 +33,15 @@ public class ArenaTaskService {
 
     public Mono<TaskAck> submitFromScript(TaskCommand cmd) {
         return Mono.fromCallable(() -> {
-            String type = CommonUtils.normalizeText(CommonUtils.toUpperCase(cmd.getType()));
+            String type = CommonUtils.normalizeText(
+                    CommonUtils.toUpperCase(cmd.getType()));
             String target = CommonUtils.normalizeText(cmd.getTarget());
             String reason = CommonUtils.normalizeText(cmd.getReason());
 
             ArenaCommandDto dto = switch (type) {
                 case "SCALE" -> {
-                    CommandValidator.validateScale(cmd.getTarget(), cmd.getValue());
+                    CommandValidator.validateScale(cmd.getTarget(),
+                            cmd.getValue());
                     yield ArenaCommandDto.builder()
                             .arenaId(cmd.getArenaId())
                             .taskId(cmd.getTaskId())
@@ -50,7 +52,8 @@ public class ArenaTaskService {
                             .build();
                 }
                 case "KILL_PODS" -> {
-                    CommandValidator.validateKillPods(cmd.getTarget(), cmd.getValue());
+                    CommandValidator.validateKillPods(cmd.getTarget(),
+                            cmd.getValue());
                     yield ArenaCommandDto.builder()
                             .arenaId(cmd.getArenaId())
                             .taskId(cmd.getTaskId())
@@ -65,16 +68,22 @@ public class ArenaTaskService {
                     RollbackSpec spec = RollbackParser.parse(cmd.getTarget());
 
                     if (!"SCALE".equals(spec.getAction())) {
-                        throw new IllegalArgumentException("ROLLBACK currently supports only SCALE, got=" + spec.getAction());
+                        throw new IllegalArgumentException(
+                                "ROLLBACK currently supports only SCALE, got=" +
+                                        spec.getAction());
                     }
                     if (spec.getValue() <= 0) {
-                        throw new IllegalArgumentException("ROLLBACK SCALE replicas must be > 0");
+                        throw new IllegalArgumentException(
+                                "ROLLBACK SCALE replicas must be > 0");
                     }
 
-                    String scaleTarget = spec.getNamespace() + "/deployment/" + spec.getName();
-                    CommandValidator.validateScale(scaleTarget, spec.getValue());
+                    String scaleTarget = spec.getNamespace() + "/deployment/" +
+                            spec.getName();
+                    CommandValidator.validateScale(scaleTarget,
+                            spec.getValue());
 
-                    String rbReason = "ROLLBACK(" + target + "): " + (reason == null ? "" : reason);
+                    String rbReason = "ROLLBACK(" + target + "): " +
+                            (reason == null ? "" : reason);
 
                     yield ArenaCommandDto.builder()
                             .arenaId(cmd.getArenaId())
@@ -85,7 +94,8 @@ public class ArenaTaskService {
                             .reason(rbReason)
                             .build();
                 }
-                default -> throw new IllegalArgumentException("unsupported type=" + cmd.getType());
+                default -> throw new IllegalArgumentException(
+                        "unsupported type=" + cmd.getType());
             };
 
             Map<String, String> headers = new HashMap<>();
@@ -94,16 +104,20 @@ public class ArenaTaskService {
             headers.put("X-Trace-Id", cmd.getTaskId());
             headers.put("X-Request-Id", cmd.getTaskId());
 
-            natsTemplate.publishRequest(cmdSubject, MESSAGE_TYPE_COMMAND, dto, headers);
+            natsTemplate.publishRequest(cmdSubject, MESSAGE_TYPE_COMMAND, dto,
+                    headers);
 
-            log.info("[TASK][SUBMIT->NATS] arenaId={} taskId={} type={} target={} value={}",
-                    dto.getArenaId(), dto.getTaskId(), dto.getType(), dto.getTarget(), dto.getValue());
+            log.info(
+                    "[TASK][SUBMIT->NATS] arenaId={} taskId={} type={} target={} value={}",
+                    dto.getArenaId(), dto.getTaskId(), dto.getType(),
+                    dto.getTarget(), dto.getValue());
 
             return TaskAck.newBuilder()
                     .setArenaId(cmd.getArenaId())
                     .setTaskId(cmd.getTaskId())
                     .setAccepted(true)
-                    .setMessage("Published to JetStream subject=" + cmdSubject + " type=" + dto.getType())
+                    .setMessage("Published to JetStream subject=" + cmdSubject +
+                            " type=" + dto.getType())
                     .build();
         });
     }

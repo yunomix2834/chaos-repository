@@ -51,11 +51,13 @@ public class NatsJetStreamConfig {
                 .maxPingsOut(5)
 
                 .connectionListener((conn, type) ->
-                        log.info("[NATS]: {} connectedUrl={}", type, conn.getConnectedUrl())
+                        log.info("[NATS]: {} connectedUrl={}", type,
+                                conn.getConnectedUrl())
                 )
                 .errorListener(new ErrorListener() {
                     @Override
-                    public void exceptionOccurred(Connection conn, Exception exp) {
+                    public void exceptionOccurred(Connection conn,
+                                                  Exception exp) {
                         log.warn("[NATS][EX]: {}", exp.getMessage(), exp);
                     }
 
@@ -65,7 +67,8 @@ public class NatsJetStreamConfig {
                     }
 
                     @Override
-                    public void slowConsumerDetected(Connection conn, Consumer consumer) {
+                    public void slowConsumerDetected(Connection conn,
+                                                     Consumer consumer) {
                         log.warn("[NATS][SLOW] consumer = {}", consumer);
                     }
                 });
@@ -75,7 +78,8 @@ public class NatsJetStreamConfig {
         }
 
         this.connection = Nats.connect(builder.build());
-        log.info("[NATS] connected OK url = {}", this.connection.getConnectedUrl());
+        log.info("[NATS] connected OK url = {}",
+                this.connection.getConnectedUrl());
         return this.connection;
     }
 
@@ -92,7 +96,8 @@ public class NatsJetStreamConfig {
     }
 
     @SneakyThrows
-    public void ensureStreamAndConsumers(JetStreamManagement jetStreamManagement) {
+    public void ensureStreamAndConsumers(
+            JetStreamManagement jetStreamManagement) {
         StreamConfiguration streamConfiguration = StreamConfiguration.builder()
                 .name(STREAM)
                 .subjects(CMD_FILTER, EVT_FILTER)
@@ -131,8 +136,10 @@ public class NatsJetStreamConfig {
         jetStreamManagement.addOrUpdateConsumer(STREAM, cmdConsumer);
         jetStreamManagement.addOrUpdateConsumer(STREAM, evtConsumer);
 
-        log.info("[NATS][JS] consumer ensured durable={} filter={}", DURABLE_CMD, CMD_FILTER);
-        log.info("[NATS][JS] consumer ensured durable={} filter={}", DURABLE_EVT, EVT_FILTER);
+        log.info("[NATS][JS] consumer ensured durable={} filter={}",
+                DURABLE_CMD, CMD_FILTER);
+        log.info("[NATS][JS] consumer ensured durable={} filter={}",
+                DURABLE_EVT, EVT_FILTER);
     }
 
     @PreDestroy

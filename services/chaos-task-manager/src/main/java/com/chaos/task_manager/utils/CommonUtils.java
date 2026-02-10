@@ -1,9 +1,9 @@
 package com.chaos.task_manager.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.springframework.http.HttpStatus;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 public class CommonUtils {
@@ -75,8 +75,11 @@ public class CommonUtils {
         }
         StringBuilder stringBuilder = new StringBuilder(parts[0]);
         for (int i = 1; i < parts.length; i++) {
-            if (parts[i].isEmpty()) continue;
-            stringBuilder.append(Character.toUpperCase(parts[i].charAt(0))).append(parts[i].substring(1));
+            if (parts[i].isEmpty()) {
+                continue;
+            }
+            stringBuilder.append(Character.toUpperCase(parts[i].charAt(0)))
+                    .append(parts[i].substring(1));
         }
         return stringBuilder.toString();
     }

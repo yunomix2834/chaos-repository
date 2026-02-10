@@ -6,11 +6,10 @@ public class Constant {
     }
 
     public static class STATUS {
+        public static final int SUCCESS = 1;
+        public static final int ERROR = 0;
         private STATUS() {
             throw new UnsupportedOperationException("Utility class");
         }
-
-        public static final int SUCCESS = 1;
-        public static final int ERROR = 0;
     }
 }

@@ -13,12 +13,14 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @GrpcService
 @RequiredArgsConstructor
-public class TaskManagerGrpcController extends TaskManagerServiceGrpc.TaskManagerServiceImplBase {
+public class TaskManagerGrpcController
+        extends TaskManagerServiceGrpc.TaskManagerServiceImplBase {
 
     private final ArenaTaskService arenaTaskService;
 
     @Override
-    public void submit(TaskCommand request, StreamObserver<TaskAck> responseObserver) {
+    public void submit(TaskCommand request,
+                       StreamObserver<TaskAck> responseObserver) {
         arenaTaskService.submitFromScript(request)
                 .onErrorResume(ex -> {
                     log.error("[GRPC][SUBMIT] failed: {}", ex.getMessage(), ex);

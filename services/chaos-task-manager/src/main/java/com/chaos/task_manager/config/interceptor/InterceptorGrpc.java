@@ -9,7 +9,6 @@ import io.grpc.ServerInterceptor;
 import io.grpc.Status;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.function.Function;
 
 @Component
@@ -22,11 +21,13 @@ public class InterceptorGrpc implements ServerInterceptor {
             ServerCallHandler<ReqT, RespT> serverCallHandler) {
 
         try {
-            Function<String, String> getValue = key -> metadata.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER));
+            Function<String, String> getValue = key -> metadata.get(
+                    Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER));
 
             Context context = Context.ROOT;
 
-            return Contexts.interceptCall(context, serverCall, metadata, serverCallHandler);
+            return Contexts.interceptCall(context, serverCall, metadata,
+                    serverCallHandler);
         } catch (Exception e) {
             Status status = Status.UNAVAILABLE.withDescription(e.getMessage());
             serverCall.close(status, metadata);

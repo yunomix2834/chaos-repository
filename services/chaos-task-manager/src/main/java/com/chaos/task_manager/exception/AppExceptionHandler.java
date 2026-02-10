@@ -20,7 +20,8 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
             AppException ex,
             ServerWebExchange request) {
         ErrorResponse errorResponse = ex.getErrorResponse();
-        HttpStatus httpStatus = CommonUtils.getHttpStatus(errorResponse.getCode());
+        HttpStatus httpStatus =
+                CommonUtils.getHttpStatus(errorResponse.getCode());
         return Mono.just(ResponseEntity.status(httpStatus).body(errorResponse));
     }
 }

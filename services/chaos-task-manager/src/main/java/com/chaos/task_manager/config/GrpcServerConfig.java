@@ -52,8 +52,10 @@ public class GrpcServerConfig implements GrpcServerConfigurer {
                 ((NettyServerBuilder) serverBuilder)
                         .keepAliveTime(30, TimeUnit.SECONDS)
                         .keepAliveTimeout(10, TimeUnit.SECONDS)
-                        .maxInboundMetadataSize(EnvConfig.GRPC_MAX_INBOUND_METADATA_SIZE)
-                        .maxInboundMessageSize(EnvConfig.GRPC_MAX_INBOUND_MESSAGE_SIZE)
+                        .maxInboundMetadataSize(
+                                EnvConfig.GRPC_MAX_INBOUND_METADATA_SIZE)
+                        .maxInboundMessageSize(
+                                EnvConfig.GRPC_MAX_INBOUND_MESSAGE_SIZE)
                         .permitKeepAliveWithoutCalls(true);
             }
         };

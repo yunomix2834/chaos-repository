@@ -23,9 +23,12 @@ public class EnvConfig {
         DB_PASSWORD = getValue("DB_PASSWORD");
 
         // GRPC
-        GRPC_SERVER_PORT = Integer.valueOf(getValue("GRPC_SERVER_PORT", "9999"));
-        GRPC_MAX_INBOUND_METADATA_SIZE = Integer.valueOf(getValue("GRPC_MAX_INBOUND_METADATA_SIZE", "40960"));
-        GRPC_MAX_INBOUND_MESSAGE_SIZE = Integer.valueOf(getValue("GRPC_MAX_INBOUND_MESSAGE_SIZE", "2147483647"));
+        GRPC_SERVER_PORT =
+                Integer.valueOf(getValue("GRPC_SERVER_PORT", "9999"));
+        GRPC_MAX_INBOUND_METADATA_SIZE = Integer.valueOf(
+                getValue("GRPC_MAX_INBOUND_METADATA_SIZE", "40960"));
+        GRPC_MAX_INBOUND_MESSAGE_SIZE = Integer.valueOf(
+                getValue("GRPC_MAX_INBOUND_MESSAGE_SIZE", "2147483647"));
 
         // NATS
         NATS_URL = getValue("NATS_URL", "nats://localhost:4222");

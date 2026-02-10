@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class ArenaCommandHandler implements HandlerBase<NatsJetStreamResponseInfo<Object>> {
+public class ArenaCommandHandler
+        implements HandlerBase<NatsJetStreamResponseInfo<Object>> {
 
     @Override
     public void handle(NatsJetStreamResponseInfo<Object> ctx) {
@@ -18,17 +19,22 @@ public class ArenaCommandHandler implements HandlerBase<NatsJetStreamResponseInf
 
             Object body = ctx.getBody();
             if (body instanceof String s) {
-                dto = CommonUtils.OBJECT_MAPPER.readValue(s, ArenaCommandDto.class);
+                dto = CommonUtils.OBJECT_MAPPER.readValue(s,
+                        ArenaCommandDto.class);
             } else {
-                dto = CommonUtils.OBJECT_MAPPER.convertValue(body, ArenaCommandDto.class);
+                dto = CommonUtils.OBJECT_MAPPER.convertValue(body,
+                        ArenaCommandDto.class);
             }
 
-            log.info("[HANDLER][ARENA_CMD] reqId={} traceId={} arenaId={} taskId={} type={} target={} value={}",
+            log.info(
+                    "[HANDLER][ARENA_CMD] reqId={} traceId={} arenaId={} taskId={} type={} target={} value={}",
                     ctx.getRequestId(), ctx.getTraceId(),
-                    dto.getArenaId(), dto.getTaskId(), dto.getType(), dto.getTarget(), dto.getValue());
+                    dto.getArenaId(), dto.getTaskId(), dto.getType(),
+                    dto.getTarget(), dto.getValue());
 
         } catch (Exception e) {
-            log.error("[HANDLER][ARENA_CMD] parse failed: {}", e.getMessage(), e);
+            log.error("[HANDLER][ARENA_CMD] parse failed: {}", e.getMessage(),
+                    e);
         }
     }
 }

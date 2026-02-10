@@ -6,9 +6,14 @@ import com.chaos.task_manager.controller.message_queue.handler.HandlerRegistry;
 import com.chaos.task_manager.dto.common.NatsJetStreamRequestInfo;
 import com.chaos.task_manager.dto.common.NatsJetStreamResponseInfo;
 import com.chaos.task_manager.utils.CommonUtils;
-import io.nats.client.*;
+import io.nats.client.JetStream;
+import io.nats.client.JetStreamManagement;
+import io.nats.client.JetStreamSubscription;
+import io.nats.client.Message;
+import io.nats.client.PullSubscribeOptions;
 import io.nats.client.api.AckPolicy;
 import io.nats.client.api.ConsumerConfiguration;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +24,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import jakarta.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
@@ -57,28 +61,32 @@ public class ListenDataNatsJetStreamController {
             try {
                 attempt++;
 
-                natsJetStreamConfig.ensureStreamAndConsumers(jetStreamManagement);
+                natsJetStreamConfig.ensureStreamAndConsumers(
+                        jetStreamManagement);
 
                 String durableEvt = NatsJetStreamConfig.DURABLE_EVT;
 
-                ConsumerConfiguration consumerConfiguration = ConsumerConfiguration.builder()
-                        .durable(durableEvt)
-                        .ackPolicy(AckPolicy.Explicit)
-                        .ackWait(Duration.ofSeconds(30))
-                        .maxDeliver(10)
-                        .maxAckPending(10_000)
-                        .filterSubject(evtSubject)
-                        .build();
+                ConsumerConfiguration consumerConfiguration =
+                        ConsumerConfiguration.builder()
+                                .durable(durableEvt)
+                                .ackPolicy(AckPolicy.Explicit)
+                                .ackWait(Duration.ofSeconds(30))
+                                .maxDeliver(10)
+                                .maxAckPending(10_000)
+                                .filterSubject(evtSubject)
+                                .build();
 
-                PullSubscribeOptions pullSubscribeOptions = PullSubscribeOptions.builder()
-                        .stream(stream)
-                        .durable(durableEvt)
-                        .configuration(consumerConfiguration)
-                        .build();
+                PullSubscribeOptions pullSubscribeOptions =
+                        PullSubscribeOptions.builder()
+                                .stream(stream)
+                                .durable(durableEvt)
+                                .configuration(consumerConfiguration)
+                                .build();
 
                 sub = jetStream.subscribe(evtSubject, pullSubscribeOptions);
 
-                log.info("[NATS][EVT] subscribed OK stream={} subject={} durable={}",
+                log.info(
+                        "[NATS][EVT] subscribed OK stream={} subject={} durable={}",
                         stream, evtSubject, durableEvt);
 
                 pullLoop();
@@ -86,7 +94,8 @@ public class ListenDataNatsJetStreamController {
 
             } catch (Exception e) {
                 long backoffMs = Math.min(10_000, 500L * attempt);
-                log.warn("[NATS][EVT] start failed attempt={} err='{}' -> retry in {}ms",
+                log.warn(
+                        "[NATS][EVT] start failed attempt={} err='{}' -> retry in {}ms",
                         attempt, e.getMessage(), backoffMs);
                 sleepSilently(backoffMs);
             }
@@ -98,7 +107,9 @@ public class ListenDataNatsJetStreamController {
             try {
                 sub.pull(10);
                 List<Message> messages = sub.fetch(10, Duration.ofSeconds(1));
-                for (Message m : messages) handleMessage(m);
+                for (Message m : messages) {
+                    handleMessage(m);
+                }
             } catch (Exception e) {
                 log.error("[NATS][EVT][PULL] error: {}", e.getMessage(), e);
                 sleepSilently(300);
@@ -108,22 +119,28 @@ public class ListenDataNatsJetStreamController {
 
     private void handleMessage(Message message) {
         try {
-            NatsJetStreamResponseInfo<Object> responseInfo = parseToResponseInfo(message);
+            NatsJetStreamResponseInfo<Object> responseInfo =
+                    parseToResponseInfo(message);
             route(responseInfo);
             message.ack();
         } catch (Exception e) {
             log.error("[NATS][EVT] handle failed: {}", e.getMessage(), e);
-            try { message.nak(); } catch (Exception ignore) {}
+            try {
+                message.nak();
+            } catch (Exception ignore) {
+            }
         }
     }
 
     @SneakyThrows
-    private NatsJetStreamResponseInfo<Object> parseToResponseInfo(Message message) {
+    private NatsJetStreamResponseInfo<Object> parseToResponseInfo(
+            Message message) {
         byte[] data = message.getData();
 
         try {
             NatsJetStreamRequestInfo requestInfo =
-                    CommonUtils.OBJECT_MAPPER.readValue(data, NatsJetStreamRequestInfo.class);
+                    CommonUtils.OBJECT_MAPPER.readValue(data,
+                            NatsJetStreamRequestInfo.class);
 
             return NatsJetStreamResponseInfo.builder()
                     .raw(message)
@@ -141,11 +158,16 @@ public class ListenDataNatsJetStreamController {
         } catch (Exception ignored) {
             String body = new String(data, StandardCharsets.UTF_8);
 
-            String msgType = message.getHeaders() != null ? message.getHeaders().getFirst("X-Message-Type") : null;
-            String reqId   = message.getHeaders() != null ? message.getHeaders().getFirst("X-Request-Id") : null;
-            String trace   = message.getHeaders() != null ? message.getHeaders().getFirst("X-Trace-Id") : null;
-            String tenant  = message.getHeaders() != null ? message.getHeaders().getFirst("X-Tenant-Id") : null;
-            String lang    = message.getHeaders() != null ? message.getHeaders().getFirst("X-Lang") : "en";
+            String msgType = message.getHeaders() != null ?
+                    message.getHeaders().getFirst("X-Message-Type") : null;
+            String reqId = message.getHeaders() != null ?
+                    message.getHeaders().getFirst("X-Request-Id") : null;
+            String trace = message.getHeaders() != null ?
+                    message.getHeaders().getFirst("X-Trace-Id") : null;
+            String tenant = message.getHeaders() != null ?
+                    message.getHeaders().getFirst("X-Tenant-Id") : null;
+            String lang = message.getHeaders() != null ?
+                    message.getHeaders().getFirst("X-Lang") : "en";
 
             return NatsJetStreamResponseInfo.builder()
                     .raw(message)
@@ -167,21 +189,32 @@ public class ListenDataNatsJetStreamController {
 
         if (!handlerRegistry.contains(beanName)) {
             log.warn("[HANDLER] not found messageType={} bean={} subject={}",
-                    responseInfo.getMessageType(), beanName, responseInfo.getSubject());
+                    responseInfo.getMessageType(), beanName,
+                    responseInfo.getSubject());
             return;
         }
 
-        HandlerBase<NatsJetStreamResponseInfo<Object>> handler = handlerRegistry.get(beanName);
+        HandlerBase<NatsJetStreamResponseInfo<Object>> handler =
+                handlerRegistry.get(beanName);
         handler.handle(responseInfo);
     }
 
     private void sleepSilently(long ms) {
-        try { Thread.sleep(ms); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     @PreDestroy
     public void stop() {
         running = false;
-        try { if (sub != null) sub.unsubscribe(); } catch (Exception ignored) {}
+        try {
+            if (sub != null) {
+                sub.unsubscribe();
+            }
+        } catch (Exception ignored) {
+        }
     }
 }

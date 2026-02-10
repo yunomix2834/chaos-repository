@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class ArenaEventHandler implements HandlerBase<NatsJetStreamResponseInfo<Object>> {
+public class ArenaEventHandler
+        implements HandlerBase<NatsJetStreamResponseInfo<Object>> {
 
     @Override
     public void handle(NatsJetStreamResponseInfo<Object> ctx) {
@@ -17,12 +18,15 @@ public class ArenaEventHandler implements HandlerBase<NatsJetStreamResponseInfo<
 
             Object body = ctx.getBody();
             if (body instanceof String s) {
-                evt = CommonUtils.OBJECT_MAPPER.readValue(s, ArenaEventDto.class);
+                evt = CommonUtils.OBJECT_MAPPER.readValue(s,
+                        ArenaEventDto.class);
             } else {
-                evt = CommonUtils.OBJECT_MAPPER.convertValue(body, ArenaEventDto.class);
+                evt = CommonUtils.OBJECT_MAPPER.convertValue(body,
+                        ArenaEventDto.class);
             }
 
-            log.info("[EVT] arenaId={} taskId={} status={} type={} target={} value={} msg={} ts={} src={}",
+            log.info(
+                    "[EVT] arenaId={} taskId={} status={} type={} target={} value={} msg={} ts={} src={}",
                     evt.getArenaId(), evt.getTaskId(), evt.getStatus(),
                     evt.getType(), evt.getTarget(), evt.getValue(),
                     evt.getMessage(), evt.getTs(), evt.getSource());
