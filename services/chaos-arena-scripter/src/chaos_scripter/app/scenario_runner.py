@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import os
+
 import yaml
 
-from chaos_scripter.domain.models import ArenaTask, SubmitResult, new_uuid
 from chaos_scripter.app.dispatcher import TaskDispatcher
+from chaos_scripter.domain.models import ArenaTask, SubmitResult, new_uuid
+
 
 class ScenarioRunner:
     def __init__(self, dispatcher: TaskDispatcher, scenario_dir: str) -> None:

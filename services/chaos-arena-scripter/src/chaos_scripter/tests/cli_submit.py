@@ -3,11 +3,15 @@ from __future__ import annotations
 import argparse
 import logging
 
-from chaos_scripter.logger import setup_logging
-from chaos_scripter.config import settings
-from chaos_scripter.domain.models import ArenaTask, new_uuid, TaskType
-from chaos_scripter.adapters.grpc_taskmanager.client import TaskManagerGrpcClient, GrpcMetadata
+from chaos_scripter.adapters.grpc_taskmanager.client import (
+    GrpcMetadata,
+    TaskManagerGrpcClient,
+)
 from chaos_scripter.app.dispatcher import TaskDispatcher
+from chaos_scripter.config import settings
+from chaos_scripter.domain.models import ArenaTask, TaskType, new_uuid
+from chaos_scripter.logger import setup_logging
+
 
 def main():
     setup_logging()
@@ -35,12 +39,21 @@ def main():
 
     client = TaskManagerGrpcClient(settings.grpc_target, settings.grpc_timeout_sec)
     try:
-        dispatcher = TaskDispatcher(client, GrpcMetadata(lang=settings.lang, tenant_id=settings.tenant_id))
+        dispatcher = TaskDispatcher(
+            client, GrpcMetadata(lang=settings.lang, tenant_id=settings.tenant_id)
+        )
         ack = dispatcher.submit(task)
-        log.info("ACK accepted=%s msg=%s arena=%s task=%s", ack.accepted, ack.message, ack.arena_id, ack.task_id)
+        log.info(
+            "ACK accepted=%s msg=%s arena=%s task=%s",
+            ack.accepted,
+            ack.message,
+            ack.arena_id,
+            ack.task_id,
+        )
         print(ack.model_dump())
     finally:
         client.close()
+
 
 if __name__ == "__main__":
     main()

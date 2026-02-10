@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
-import subprocess
+
 
 def main() -> int:
 
@@ -26,7 +27,9 @@ def main() -> int:
         return 2
 
     cmd = [
-        sys.executable, "-m", "grpc_tools.protoc",
+        sys.executable,
+        "-m",
+        "grpc_tools.protoc",
         f"-I{proto_dir}",
         f"--python_out={out_dir}",
         f"--grpc_python_out={out_dir}",
@@ -36,6 +39,6 @@ def main() -> int:
     print("[CMD]", " ".join(cmd))
     return subprocess.run(cmd, cwd=str(service_dir)).returncode
 
+
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+from chaos_scripter.adapters.grpc_taskmanager.client import (
+    GrpcMetadata,
+    TaskManagerGrpcClient,
+)
 from chaos_scripter.domain.models import ArenaTask, SubmitResult
-from chaos_scripter.adapters.grpc_taskmanager.client import TaskManagerGrpcClient, GrpcMetadata
+
 
 class TaskDispatcher:
-    def __init__(self, grpc_client: TaskManagerGrpcClient, base_md: GrpcMetadata) -> None:
+    def __init__(
+        self, grpc_client: TaskManagerGrpcClient, base_md: GrpcMetadata
+    ) -> None:
         self.grpc_client = grpc_client
         self.base_md = base_md
 

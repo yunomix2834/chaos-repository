@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+
 import grpc
 
-from chaos_scripter.generated.arena_pb2 import TaskCommand # type: ignore
-from chaos_scripter.generated.arena_pb2_grpc import TaskManagerServiceStub # type: ignore
-
 from chaos_scripter.domain.models import ArenaTask, SubmitResult
+from chaos_scripter.generated.arena_pb2 import TaskCommand  # type: ignore
+from chaos_scripter.generated.arena_pb2_grpc import (
+    TaskManagerServiceStub,
+)  # type: ignore
 
 log = logging.getLogger(__name__)
+
 
 @dataclass
 class GrpcMetadata:
@@ -30,6 +33,7 @@ class GrpcMetadata:
         if self.request_id:
             md.append(("x-request-id", self.request_id))
         return md
+
 
 class TaskManagerGrpcClient:
     def __init__(self, target: str, timeout_sec: float = 5.0) -> None:
@@ -54,8 +58,15 @@ class TaskManagerGrpcClient:
             reason=task.reason or "",
         )
 
-        log.info("[GRPC][SUBMIT] target=%s arena=%s task=%s type=%s target=%s value=%s",
-                 self._target, task.arena_id, task.task_id, task.type, task.target, task.value)
+        log.info(
+            "[GRPC][SUBMIT] target=%s arena=%s task=%s type=%s target=%s value=%s",
+            self._target,
+            task.arena_id,
+            task.task_id,
+            task.type,
+            task.target,
+            task.value,
+        )
 
         ack = self._stub.Submit(req, timeout=self._timeout, metadata=md.to_tuples())
         return SubmitResult(

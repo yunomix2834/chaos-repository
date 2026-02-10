@@ -1,17 +1,30 @@
 from __future__ import annotations
 
 import logging
+
 import discord
 from discord import app_commands
 
-from chaos_scripter.domain.models import ArenaTask, new_uuid, TaskType, rollback_scale_target
 from chaos_scripter.app.dispatcher import TaskDispatcher
 from chaos_scripter.app.scenario_runner import ScenarioRunner
+from chaos_scripter.domain.models import (
+    ArenaTask,
+    TaskType,
+    new_uuid,
+    rollback_scale_target,
+)
 
 log = logging.getLogger(__name__)
 
+
 class ChaosDiscordBot(discord.Client):
-    def __init__(self, dispatcher: TaskDispatcher, scenario_runner: ScenarioRunner, guild_id: int | None, channel_id: int | None = None):
+    def __init__(
+        self,
+        dispatcher: TaskDispatcher,
+        scenario_runner: ScenarioRunner,
+        guild_id: int | None,
+        channel_id: int | None = None,
+    ):
         intents = discord.Intents.default()
         super().__init__(intents=intents)
 
@@ -31,18 +44,28 @@ class ChaosDiscordBot(discord.Client):
     async def _deny_if_not_allowed(self, interaction: discord.Interaction) -> bool:
         if self._allowed(interaction):
             return False
-        await interaction.response.send_message("Only test in channel has been config.", ephemeral=True)
+        await interaction.response.send_message(
+            "Only test in channel has been config.", ephemeral=True
+        )
         return True
 
     def _register_commands(self) -> None:
-        @self.tree.command(name="scale", description="Scale deployment to replicas (via TaskManager)")
+        @self.tree.command(
+            name="scale", description="Scale deployment to replicas (via TaskManager)"
+        )
         @app_commands.describe(
             target="deployment/<name> OR <ns>/deployment/<name>",
             replicas="replicas > 0",
             reason="audit reason",
-            arena_id="optional arena uuid"
+            arena_id="optional arena uuid",
         )
-        async def scale(interaction: discord.Interaction, target: str, replicas: int, reason: str = "discord", arena_id: str | None = None):
+        async def scale(
+            interaction: discord.Interaction,
+            target: str,
+            replicas: int,
+            reason: str = "discord",
+            arena_id: str | None = None,
+        ):
             if await self._deny_if_not_allowed(interaction):
                 return
             await interaction.response.defer(thinking=True)
@@ -58,19 +81,30 @@ class ChaosDiscordBot(discord.Client):
             )
             try:
                 ack = self.dispatcher.submit(task)
-                await interaction.followup.send(f"✅ SCALE submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`")
+                await interaction.followup.send(
+                    f"✅ SCALE submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`"
+                )
             except Exception as e:
                 log.exception("scale failed")
                 await interaction.followup.send(f"❌ scale failed: `{e}`")
 
-        @self.tree.command(name="kill_pods", description="Kill percent of pods by label selector (via TaskManager)")
+        @self.tree.command(
+            name="kill_pods",
+            description="Kill percent of pods by label selector (via TaskManager)",
+        )
         @app_commands.describe(
             selector="label selector, e.g. app=cart",
             percent="1..100",
             reason="audit reason",
-            arena_id="optional arena uuid"
+            arena_id="optional arena uuid",
         )
-        async def kill_pods(interaction: discord.Interaction, selector: str, percent: int, reason: str = "discord", arena_id: str | None = None):
+        async def kill_pods(
+            interaction: discord.Interaction,
+            selector: str,
+            percent: int,
+            reason: str = "discord",
+            arena_id: str | None = None,
+        ):
             if await self._deny_if_not_allowed(interaction):
                 return
             await interaction.response.defer(thinking=True)
@@ -86,25 +120,39 @@ class ChaosDiscordBot(discord.Client):
             )
             try:
                 ack = self.dispatcher.submit(task)
-                await interaction.followup.send(f"✅ KILL_PODS submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`")
+                await interaction.followup.send(
+                    f"✅ KILL_PODS submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`"
+                )
             except Exception as e:
                 log.exception("kill_pods failed")
                 await interaction.followup.send(f"❌ kill_pods failed: `{e}`")
 
-        @self.tree.command(name="rollback_scale", description="Rollback SCALE to previous replicas (via TaskManager)")
+        @self.tree.command(
+            name="rollback_scale",
+            description="Rollback SCALE to previous replicas (via TaskManager)",
+        )
         @app_commands.describe(
             namespace="namespace, e.g. default",
             deployment="deployment name, e.g. cart",
             previous_replicas="replicas to rollback to",
             reason="audit reason",
-            arena_id="optional arena uuid"
+            arena_id="optional arena uuid",
         )
-        async def rollback_scale(interaction: discord.Interaction, namespace: str, deployment: str, previous_replicas: int, reason: str = "discord", arena_id: str | None = None):
+        async def rollback_scale(
+            interaction: discord.Interaction,
+            namespace: str,
+            deployment: str,
+            previous_replicas: int,
+            reason: str = "discord",
+            arena_id: str | None = None,
+        ):
             if await self._deny_if_not_allowed(interaction):
                 return
             await interaction.response.defer(thinking=True)
 
-            rb_target = rollback_scale_target(namespace.strip(), deployment.strip(), int(previous_replicas))
+            rb_target = rollback_scale_target(
+                namespace.strip(), deployment.strip(), int(previous_replicas)
+            )
 
             task = ArenaTask(
                 arena_id=arena_id or new_uuid(),
@@ -117,14 +165,20 @@ class ChaosDiscordBot(discord.Client):
             )
             try:
                 ack = self.dispatcher.submit(task)
-                await interaction.followup.send(f"✅ ROLLBACK(SCALE) submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`\n- target=`{rb_target}`")
+                await interaction.followup.send(
+                    f"✅ ROLLBACK(SCALE) submitted: accepted={ack.accepted} msg=`{ack.message}`\n- arena=`{ack.arena_id}` task=`{ack.task_id}`\n- target=`{rb_target}`"
+                )
             except Exception as e:
                 log.exception("rollback_scale failed")
                 await interaction.followup.send(f"❌ rollback_scale failed: `{e}`")
 
-
-        @self.tree.command(name="run_scenario", description="Run a YAML scenario by file name in scenarios/")
-        async def run_scenario(interaction: discord.Interaction, name: str, arena_id: str | None = None):
+        @self.tree.command(
+            name="run_scenario",
+            description="Run a YAML scenario by file name in scenarios/",
+        )
+        async def run_scenario(
+            interaction: discord.Interaction, name: str, arena_id: str | None = None
+        ):
             if await self._deny_if_not_allowed(interaction):
                 return
             await interaction.response.defer(thinking=True)
@@ -132,15 +186,19 @@ class ChaosDiscordBot(discord.Client):
                 results = self.scenario_runner.run(name=name.strip(), arena_id=arena_id)
                 accepted = sum(1 for r in results if r.accepted)
                 arena = results[0].arena_id if results else (arena_id or "unknown")
-                await interaction.followup.send(f"🏁 Scenario `{name}` submitted arena=`{arena}` tasks=`{len(results)}` accepted=`{accepted}`")
+                await interaction.followup.send(
+                    f"🏁 Scenario `{name}` submitted arena=`{arena}` tasks=`{len(results)}` accepted=`{accepted}`"
+                )
             except Exception as e:
                 log.exception("run_scenario failed")
                 await interaction.followup.send(f"❌ run_scenario failed: `{e}`")
 
-        @self.tree.command(name="run_scenario_file", description="Upload YAML scenario file and run it (submit tasks)")
+        @self.tree.command(
+            name="run_scenario_file",
+            description="Upload YAML scenario file and run it (submit tasks)",
+        )
         @app_commands.describe(
-            file="Upload .yaml/.yml with key `steps:`",
-            arena_id="optional arena uuid"
+            file="Upload .yaml/.yml with key `steps:`", arena_id="optional arena uuid"
         )
         async def run_scenario_file(
             interaction: discord.Interaction,
@@ -152,8 +210,6 @@ class ChaosDiscordBot(discord.Client):
 
             await interaction.response.defer(thinking=True)
 
-            await interaction.response.defer(thinking=True)
-
             fname = (file.filename or "").lower().strip()
             if not (fname.endswith(".yaml") or fname.endswith(".yml")):
                 await interaction.followup.send("❌ File phải là `.yaml` hoặc `.yml`.")
@@ -161,7 +217,9 @@ class ChaosDiscordBot(discord.Client):
 
             max_bytes = 512 * 1024
             if file.size and file.size > max_bytes:
-                await interaction.followup.send(f"❌ File quá lớn ({file.size} bytes). Giới hạn {max_bytes} bytes.")
+                await interaction.followup.send(
+                    f"❌ File quá lớn ({file.size} bytes). Giới hạn {max_bytes} bytes."
+                )
                 return
 
             try:
@@ -181,7 +239,9 @@ class ChaosDiscordBot(discord.Client):
 
             steps = spec.get("steps", None)
             if not isinstance(steps, list) or not steps:
-                await interaction.followup.send("❌ YAML không hợp lệ: cần `steps:` là list và không rỗng.")
+                await interaction.followup.send(
+                    "❌ YAML không hợp lệ: cần `steps:` là list và không rỗng."
+                )
                 return
 
             real_arena = (arena_id or new_uuid()).strip()
@@ -191,16 +251,22 @@ class ChaosDiscordBot(discord.Client):
             try:
                 for i, step in enumerate(steps, start=1):
                     if not isinstance(step, dict):
-                        await interaction.followup.send(f"❌ Step #{i} không phải object: `{step}`")
+                        await interaction.followup.send(
+                            f"❌ Step #{i} không phải object: `{step}`"
+                        )
                         return
 
                     typ = str(step.get("type", "")).strip().upper()
                     target = str(step.get("target", "")).strip()
                     value = int(step.get("value", 0) or 0)
-                    reason = str(step.get("reason", f"uploaded:{file.filename}")).strip()
+                    reason = str(
+                        step.get("reason", f"uploaded:{file.filename}")
+                    ).strip()
 
                     if not typ or not target:
-                        await interaction.followup.send(f"❌ Step #{i} thiếu `type` hoặc `target`: `{step}`")
+                        await interaction.followup.send(
+                            f"❌ Step #{i} thiếu `type` hoặc `target`: `{step}`"
+                        )
                         return
 
                     # Optional: validate type set
@@ -231,7 +297,10 @@ class ChaosDiscordBot(discord.Client):
 
             accepted = sum(1 for r in results if r.accepted)
             lines = "\n".join(
-                [f"- `{r.task_id}` accepted={r.accepted} msg=`{r.message}`" for r in results[:10]]
+                [
+                    f"- `{r.task_id}` accepted={r.accepted} msg=`{r.message}`"
+                    for r in results[:10]
+                ]
             )
             if len(results) > 10:
                 lines += f"\n...and {len(results) - 10} more"
@@ -248,7 +317,14 @@ class ChaosDiscordBot(discord.Client):
             guild = discord.Object(id=self.guild_id)
             self.tree.copy_global_to(guild=guild)
             synced = await self.tree.sync(guild=guild)
-            log.info("Synced %d commands to guild=%s: %s", len(synced), self.guild_id, [c.name for c in synced])
+            log.info(
+                "Synced %d commands to guild=%s: %s",
+                len(synced),
+                self.guild_id,
+                [c.name for c in synced],
+            )
         else:
             synced = await self.tree.sync()
-            log.info("Synced %d global commands: %s", len(synced), [c.name for c in synced])
+            log.info(
+                "Synced %d global commands: %s", len(synced), [c.name for c in synced]
+            )

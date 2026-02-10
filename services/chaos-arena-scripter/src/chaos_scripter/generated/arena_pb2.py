@@ -4,40 +4,39 @@
 # source: arena.proto
 # Protobuf Python Version: 6.31.1
 """Generated protocol buffer code."""
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
+
 _runtime_version.ValidateProtobufRuntimeVersion(
-    _runtime_version.Domain.PUBLIC,
-    6,
-    31,
-    1,
-    '',
-    'arena.proto'
+    _runtime_version.Domain.PUBLIC, 6, 31, 1, "", "arena.proto"
 )
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-
-
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x61rena.proto\x12\x08\x63haos.v1\"m\n\x0bTaskCommand\x12\x10\n\x08\x61rena_id\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\x12\x0c\n\x04type\x18\x03 \x01(\t\x12\x0e\n\x06target\x18\x04 \x01(\t\x12\r\n\x05value\x18\x05 \x01(\x05\x12\x0e\n\x06reason\x18\x06 \x01(\t\"O\n\x07TaskAck\x12\x10\n\x08\x61rena_id\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x03 \x01(\x08\x12\x0f\n\x07message\x18\x04 \x01(\t2w\n\x0c\x41gentService\x12\x31\n\x05\x41pply\x12\x15.chaos.v1.TaskCommand\x1a\x11.chaos.v1.TaskAck\x12\x34\n\x08Rollback\x12\x15.chaos.v1.TaskCommand\x1a\x11.chaos.v1.TaskAck2H\n\x12TaskManagerService\x12\x32\n\x06Submit\x12\x15.chaos.v1.TaskCommand\x1a\x11.chaos.v1.TaskAckB\x1f\n\x0f\x63om.arena.protoB\nArenaProtoP\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\x0b\x61rena.proto\x12\x08\x63haos.v1"m\n\x0bTaskCommand\x12\x10\n\x08\x61rena_id\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\x12\x0c\n\x04type\x18\x03 \x01(\t\x12\x0e\n\x06target\x18\x04 \x01(\t\x12\r\n\x05value\x18\x05 \x01(\x05\x12\x0e\n\x06reason\x18\x06 \x01(\t"O\n\x07TaskAck\x12\x10\n\x08\x61rena_id\x18\x01 \x01(\t\x12\x0f\n\x07task_id\x18\x02 \x01(\t\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x03 \x01(\x08\x12\x0f\n\x07message\x18\x04 \x01(\t2w\n\x0c\x41gentService\x12\x31\n\x05\x41pply\x12\x15.chaos.v1.TaskCommand\x1a\x11.chaos.v1.TaskAck\x12\x34\n\x08Rollback\x12\x15.chaos.v1.TaskCommand\x1a\x11.chaos.v1.TaskAck2H\n\x12TaskManagerService\x12\x32\n\x06Submit\x12\x15.chaos.v1.TaskCommand\x1a\x11.chaos.v1.TaskAckB\x1f\n\x0f\x63om.arena.protoB\nArenaProtoP\x01\x62\x06proto3'
+)
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'arena_pb2', _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "arena_pb2", _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'\n\017com.arena.protoB\nArenaProtoP\001'
-  _globals['_TASKCOMMAND']._serialized_start=25
-  _globals['_TASKCOMMAND']._serialized_end=134
-  _globals['_TASKACK']._serialized_start=136
-  _globals['_TASKACK']._serialized_end=215
-  _globals['_AGENTSERVICE']._serialized_start=217
-  _globals['_AGENTSERVICE']._serialized_end=336
-  _globals['_TASKMANAGERSERVICE']._serialized_start=338
-  _globals['_TASKMANAGERSERVICE']._serialized_end=410
+    _globals["DESCRIPTOR"]._loaded_options = None
+    _globals["DESCRIPTOR"]._serialized_options = (
+        b"\n\017com.arena.protoB\nArenaProtoP\001"
+    )
+    _globals["_TASKCOMMAND"]._serialized_start = 25
+    _globals["_TASKCOMMAND"]._serialized_end = 134
+    _globals["_TASKACK"]._serialized_start = 136
+    _globals["_TASKACK"]._serialized_end = 215
+    _globals["_AGENTSERVICE"]._serialized_start = 217
+    _globals["_AGENTSERVICE"]._serialized_end = 336
+    _globals["_TASKMANAGERSERVICE"]._serialized_start = 338
+    _globals["_TASKMANAGERSERVICE"]._serialized_end = 410
 # @@protoc_insertion_point(module_scope)
