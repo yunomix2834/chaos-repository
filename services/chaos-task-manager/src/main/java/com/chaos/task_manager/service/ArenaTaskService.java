@@ -6,7 +6,9 @@ import com.chaos.task_manager.config.template.NatsJetStreamTemplate;
 import com.chaos.task_manager.domain.rollback.RollbackParser;
 import com.chaos.task_manager.domain.rollback.RollbackSpec;
 import com.chaos.task_manager.domain.validator.CommandValidator;
+import com.chaos.task_manager.dto.common.ErrorResponse;
 import com.chaos.task_manager.dto.request.arena.ArenaCommandDto;
+import com.chaos.task_manager.exception.AppException;
 import com.chaos.task_manager.utils.CommonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
@@ -68,13 +70,13 @@ public class ArenaTaskService {
                     RollbackSpec spec = RollbackParser.parse(cmd.getTarget());
 
                     if (!"SCALE".equals(spec.getAction())) {
-                        throw new IllegalArgumentException(
+                        throw new AppException(new ErrorResponse(String.format(
                                 "ROLLBACK currently supports only SCALE, got=" +
-                                        spec.getAction());
+                                        spec.getAction())));
                     }
                     if (spec.getValue() <= 0) {
-                        throw new IllegalArgumentException(
-                                "ROLLBACK SCALE replicas must be > 0");
+                        throw new AppException(new ErrorResponse(
+                                "ROLLBACK SCALE replicas must be > 0"));
                     }
 
                     String scaleTarget = spec.getNamespace() + "/deployment/" +
@@ -94,8 +96,9 @@ public class ArenaTaskService {
                             .reason(rbReason)
                             .build();
                 }
-                default -> throw new IllegalArgumentException(
-                        "unsupported type=" + cmd.getType());
+                default -> throw new AppException(
+                        new ErrorResponse("unsupported type=" + cmd.getType()));
+
             };
 
             Map<String, String> headers = new HashMap<>();
